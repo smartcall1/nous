@@ -41,10 +41,6 @@ check_utf8() {
 API_KEYS_DIR="api_keys"
 mkdir -p "$API_KEYS_DIR"
 
-
-
-
-
 # API 키 관리 함수
 manage_api_keys() {
     while true; do
@@ -150,56 +146,7 @@ run_chatbot() {
     done
 }
 
-# 모니터링 함수
-monitor_chatbots() {
-    while true; do
-        clear
-        echo -e "\n📊 채팅봇 모니터링 대시보드"
-        echo "----------------------------------------"
-        for api_key_name in "$API_KEYS_DIR"/*; do
-            if [ -f "$api_key_name" ]; then
-                api_key_name=$(basename "$api_key_name")
-                log_file="logs/${api_key_name}.log"
-                if [ -f "$log_file" ]; then
-                    echo -e "\n🤖 채팅봇: $api_key_name"
-                    echo "마지막 활동: $(tail -n 1 "$log_file" 2>/dev/null || echo "활동 없음")"
-                    echo "상태: $(ps aux | grep "run_chatbot $api_key_name" | grep -v grep >/dev/null && echo "실행 중" || echo "중지됨")"
-                fi
-            fi
-        done
-        echo -e "\n\n1. 새로고침"
-        echo "2. 종료"
-        read -p "선택하세요 (1-2): " choice
-        if [ "$choice" = "2" ]; then
-            break
-        fi
-        sleep 5
-    done
-}
-
-# 메인 실행
-check_utf8
-export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-
-# API 키 관리
-manage_api_keys
-
-# 질문 파일 확인
-if [[ ! -f "questions.txt" ]]; then
-    echo "❌ 질문 파일 'questions.txt' 을(를) 찾을 수 없습니다."
-    exit 1
-fi
-
-# 각 API 키별로 채팅봇 실행
-for api_key_name in "$API_KEYS_DIR"/*; do
-    if [ -f "$api_key_name" ]; then
-        api_key_name=$(basename "$api_key_name")
-        run_chatbot "$api_key_name" &
-    fi
-done
-
-# 모니터링 함수
+# 모니터링 함수 (이전 함수 삭제)
 monitor_chatbots() {
     while true; do
         clear
@@ -242,6 +189,31 @@ monitor_chatbots() {
         sleep 5
     done
 }
+
+# 메인 실행
+check_utf8
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
+# API 키 관리
+manage_api_keys
+
+# 질문 파일 확인
+if [[ ! -f "questions.txt" ]]; then
+    echo "❌ 질문 파일 'questions.txt' 을(를) 찾을 수 없습니다."
+    exit 1
+fi
+
+# 각 API 키별로 채팅봇 실행
+for api_key_name in "$API_KEYS_DIR"/*; do
+    if [ -f "$api_key_name" ]; then
+        api_key_name=$(basename "$api_key_name")
+        run_chatbot "$api_key_name" &
+    fi
+done
+
+# 모니터링 시작
+monitor_chatbots
 
 # 종료 시 모든 프로세스 정리
 pkill -f "run_chatbot"
