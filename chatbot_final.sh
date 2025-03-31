@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# 필요한 디렉토리 생성
+mkdir -p "api_keys"
+mkdir -p "logs"
+
 cat << "EOF"
 
     ██████╗  ██████╗ ███╗   ██╗███████╗███╗   ███╗ ██████╗      ██╗██╗
@@ -146,7 +150,7 @@ run_chatbot() {
     done
 }
 
-# 모니터링 함수 (하나만 남기고 나머지는 삭제)
+# 모니터링 함수 (한 번만 정의)
 monitor_chatbots() {
     while true; do
         clear
@@ -190,7 +194,10 @@ monitor_chatbots() {
     done
 }
 
-# 메인 실행 부분
+# 종료 시 정리를 위한 트랩 설정
+trap 'pkill -f "run_chatbot"; exit' INT TERM
+
+# 메인 실행
 check_utf8
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
@@ -212,7 +219,7 @@ for api_key_name in "$API_KEYS_DIR"/*; do
     fi
 done
 
-# 모니터링 시작 (여기서 바로 모니터링 함수 호출)
+# 모니터링 시작
 monitor_chatbots
 
 # 종료 시 모든 프로세스 정리
