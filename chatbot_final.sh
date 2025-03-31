@@ -41,6 +41,10 @@ check_utf8() {
 API_KEYS_DIR="api_keys"
 mkdir -p "$API_KEYS_DIR"
 
+
+
+
+
 # API 키 관리 함수
 manage_api_keys() {
     while true; do
@@ -55,7 +59,7 @@ manage_api_keys() {
         case $choice in
             1)
                 read -p "API 키 이름을 입력하세요: " key_name
-                read -s -p "API 키를 입력하세요: " api_key
+                read -p "API 키를 입력하세요: " api_key
                 echo "$api_key" > "$API_KEYS_DIR/$key_name"
                 echo -e "\n✅ API 키가 저장되었습니다."
                 ;;
@@ -195,8 +199,49 @@ for api_key_name in "$API_KEYS_DIR"/*; do
     fi
 done
 
-# 모니터링 시작
-monitor_chatbots
+# 모니터링 함수
+monitor_chatbots() {
+    while true; do
+        clear
+        echo -e "\n📊 채팅봇 모니터링 대시보드"
+        echo "----------------------------------------"
+        for api_key_name in "$API_KEYS_DIR"/*; do
+            if [ -f "$api_key_name" ]; then
+                api_key_name=$(basename "$api_key_name")
+                log_file="logs/${api_key_name}.log"
+                if [ -f "$log_file" ]; then
+                    echo -e "\n🤖 채팅봇: $api_key_name"
+                    
+                    # 마지막 5줄의 로그를 가져옴
+                    last_lines=$(tail -n 5 "$log_file" 2>/dev/null)
+                    
+                    # 상태 확인 (대기 중인지 확인)
+                    if echo "$last_lines" | grep -q "다음 질문까지 약"; then
+                        status="대기 중"
+                    elif ps aux | grep "run_chatbot $api_key_name" | grep -v grep >/dev/null; then
+                        status="실행 중"
+                    else
+                        status="중지됨"
+                    fi
+                    
+                    echo "상태: $status"
+                    echo "마지막 활동:"
+                    echo "$last_lines" | while IFS= read -r line; do
+                        echo "  $line"
+                    done
+                    echo "----------------------------------------"
+                fi
+            fi
+        done
+        echo -e "\n\n1. 새로고침"
+        echo "2. 종료"
+        read -p "선택하세요 (1-2): " choice
+        if [ "$choice" = "2" ]; then
+            break
+        fi
+        sleep 5
+    done
+}
 
 # 종료 시 모든 프로세스 정리
 pkill -f "run_chatbot"
